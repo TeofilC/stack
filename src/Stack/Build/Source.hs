@@ -203,7 +203,10 @@ loadCabalConfigOpts bconfig name isTarget isLocal = concat
 -- configuration and commandline.
 generalGhcOptions :: BuildConfig -> BuildOptsCLI -> Bool -> Bool -> [Text]
 generalGhcOptions bconfig boptsCli isTarget isLocal = concat
-    [ Map.findWithDefault [] AGOEverything (configGhcOptionsByCat config)
+    [ if boptsLibProfile bopts || boptsExeProfile bopts
+        then ["-fprof-auto","-fprof-cafs"]
+        else []
+    , Map.findWithDefault [] AGOEverything (configGhcOptionsByCat config)
     , if isLocal
         then Map.findWithDefault [] AGOLocals (configGhcOptionsByCat config)
         else []
@@ -211,9 +214,6 @@ generalGhcOptions bconfig boptsCli isTarget isLocal = concat
         then Map.findWithDefault [] AGOTargets (configGhcOptionsByCat config)
         else []
     , concat [["-fhpc"] | isLocal && toCoverage (boptsTestOpts bopts)]
-    , if boptsLibProfile bopts || boptsExeProfile bopts
-         then ["-fprof-auto","-fprof-cafs"]
-         else []
     , if not $ boptsLibStrip bopts || boptsExeStrip bopts
          then ["-g"]
          else []
